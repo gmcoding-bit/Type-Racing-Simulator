@@ -18,6 +18,12 @@ public class Typist
     // A third tracks HOW MANY turns of burnout remain (not just whether they are burnt out).
     // The remaining three should be fairly obvious.
 
+    private char typistSymbol;
+    private String typistName;
+    private double typistAccuracy;
+    private int typistDistance;
+    private boolean burntOut;
+    private int burnoutRemaining;
 
 
 
@@ -32,7 +38,12 @@ public class Typist
      */
     public Typist(char typistSymbol, String typistName, double typistAccuracy)
     {
-
+        this.typistSymbol = typistSymbol;
+        this.typistName = typistName;
+        this.typistAccuracy = typistAccuracy;
+        this.typistDistance = 0;
+        this.burntOut = false;
+        this.burnoutRemaining = 0;
     }
 
 
