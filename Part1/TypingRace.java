@@ -82,6 +82,7 @@ public class TypingRace
         // (Ty was in a hurry here)
         seat1Typist.resetToStart();
         seat2Typist.resetToStart();
+        seat3Typist.resetToStart();
 
         while (!finished)
         {
@@ -129,25 +130,25 @@ public class TypingRace
             theTypist.recoverFromBurnout();
             return;
         }
-
-        // Attempt to type a character
-        if (Math.random() < theTypist.getAccuracy())
-        {
-            theTypist.typeCharacter();
-        }
-
-        // Mistype check — the probability should reflect the typist's accuracy
-        if (Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE)
-        {
-            theTypist.slideBack(SLIDE_BACK_AMOUNT);
-        }
-
+        
         // Burnout check — pushing too hard increases burnout risk
         // (probability scales with accuracy squared, capped at ~0.05)
         if (Math.random() < 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy())
         {
             theTypist.burnOut(BURNOUT_DURATION);
         }
+        // Mistype check — the probability should reflect the typist's accuracy
+        else if (Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE)
+        {
+            theTypist.slideBack(SLIDE_BACK_AMOUNT);
+        }
+        // Attempt to type a character
+        else if (Math.random() < theTypist.getAccuracy())
+        {
+            theTypist.typeCharacter();
+        }
+
+
     }
 
     /**
@@ -257,5 +258,14 @@ public class TypingRace
             System.out.print(aChar);
             i = i + 1;
         }
+    }
+
+    public static void main(String[] args) {
+    TypingRace race = new TypingRace(40);
+    race.addTypist(new Typist('①', "TURBOFINGERS", 0.85), 1);
+    race.addTypist(new Typist('②', "QWERTY_QUEEN",  0.60), 2);
+    race.addTypist(new Typist('③', "HUNT_N_PECK",   0.30), 3);
+    race.startRace();
+    race.startRace();
     }
 }
