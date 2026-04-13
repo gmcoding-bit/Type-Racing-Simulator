@@ -23,7 +23,7 @@ public class Typist
     private double typistAccuracy;
     private int typistDistance;
     private boolean burntOut;
-    private int burnoutRemaining;
+    private int burnOutRemaining;
 
 
 
@@ -43,7 +43,7 @@ public class Typist
         this.typistAccuracy = typistAccuracy;
         this.typistDistance = 0;
         this.burntOut = false;
-        this.burnoutRemaining = 0;
+        this.burnOutRemaining = 0;
     }
 
 
@@ -57,7 +57,11 @@ public class Typist
      */
     public void burnOut(int turns)
     {
-
+        //can only burn out if not already burnt out
+        if(!this.burntOut){
+            this.burnOutRemaining = turns;
+            this.burntOut = true;
+        }
     }
 
     /**
@@ -67,7 +71,12 @@ public class Typist
      */
     public void recoverFromBurnout()
     {
-
+        if(this.burntOut){
+            this.burnOutRemaining--;
+        }
+        if(this.burnOutRemaining <= 0){
+            this.burntOut = false;
+        }
     }
 
     /**
@@ -77,7 +86,7 @@ public class Typist
      */
     public double getAccuracy()
     {
-        return 0.0; // placeholder - replace with correct implementation
+        return this.typistAccuracy;
     }
 
     /**
@@ -89,7 +98,7 @@ public class Typist
      */
     public int getProgress()
     {
-        return 0; // placeholder - replace with correct implementation
+        return this.typistDistance; // placeholder - replace with correct implementation
     }
 
     /**
@@ -99,7 +108,7 @@ public class Typist
      */
     public String getName()
     {
-        return ""; // placeholder - replace with correct implementation
+        return this.typistName; // placeholder - replace with correct implementation
     }
 
     /**
@@ -109,7 +118,7 @@ public class Typist
      */
     public char getSymbol()
     {
-        return ' '; // placeholder - replace with correct implementation
+        return this.typistSymbol; // placeholder - replace with correct implementation
     }
 
     /**
@@ -120,7 +129,11 @@ public class Typist
      */
     public int getBurnoutTurnsRemaining()
     {
-        return 0; // placeholder - replace with correct implementation
+        if(this.burntOut){
+            return this.burnOutRemaining; 
+        }else{
+            return 0;
+        }
     }
 
     /**
@@ -129,7 +142,9 @@ public class Typist
      */
     public void resetToStart()
     {
-
+        this.burnOutRemaining = 0;
+        this.typistDistance = 0;
+        this.burntOut = false;   
     }
 
     /**
@@ -139,7 +154,7 @@ public class Typist
      */
     public boolean isBurntOut()
     {
-        return false; // placeholder - replace with correct implementation
+        return this.burntOut; 
     }
 
     /**
@@ -148,7 +163,7 @@ public class Typist
      */
     public void typeCharacter()
     {
-
+        this.typistDistance++;
     }
 
     /**
@@ -159,7 +174,11 @@ public class Typist
      */
     public void slideBack(int amount)
     {
-
+        if(this.typistDistance  - amount >= 0){
+            this.typistDistance -= amount;
+        }else{
+            this.typistDistance = 0;
+        }
     }
 
     /**
@@ -170,7 +189,13 @@ public class Typist
      */
     public void setAccuracy(double newAccuracy)
     {
-
+        if(newAccuracy < 0.0){
+            this.typistAccuracy = 0.0;
+        }else if(newAccuracy > 1.0){
+            this.typistAccuracy = 1.0;
+        }else{          
+            this.typistAccuracy = newAccuracy;
+        }
     }
 
     /**
@@ -180,7 +205,6 @@ public class Typist
      */
     public void setSymbol(char newSymbol)
     {
-
+        this.typistSymbol = newSymbol;
     }
-
 }
