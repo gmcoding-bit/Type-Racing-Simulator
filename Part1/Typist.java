@@ -163,6 +163,9 @@ public class Typist
      */
     public void typeCharacter()
     {
+        if(this.burntOut){
+            return;
+        }
         this.typistDistance++;
     }
 
