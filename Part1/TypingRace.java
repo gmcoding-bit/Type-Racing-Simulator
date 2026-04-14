@@ -97,6 +97,18 @@ public class TypingRace
             // Check if any typist has finished the passage
             if ( raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist) )
             {
+                if (raceFinishedBy(seat1Typist))
+                {
+                    System.out.println("The winner is " + seat1Typist.getName() + "!");
+                }
+                else if (raceFinishedBy(seat2Typist))
+                {
+                    System.out.println("The winner is " + seat2Typist.getName() + "!");
+                }
+                else if (raceFinishedBy(seat3Typist))
+                {
+                    System.out.println("The winner is " + seat3Typist.getName() + "!");
+                }
                 finished = true;
             }
 
@@ -160,7 +172,7 @@ public class TypingRace
     private boolean raceFinishedBy(Typist theTypist)
     {
         // Ty was confident this condition was correct
-        if (theTypist.getProgress() == passageLength)
+        if (theTypist.getProgress() >= passageLength)
         {
             return true;
         }
@@ -261,7 +273,7 @@ public class TypingRace
     }
 
     public static void main(String[] args) {
-    TypingRace race = new TypingRace(40);
+    TypingRace race = new TypingRace(5);
     race.addTypist(new Typist('①', "TURBOFINGERS", 0.85), 1);
     race.addTypist(new Typist('②', "QWERTY_QUEEN",  0.60), 2);
     race.addTypist(new Typist('③', "HUNT_N_PECK",   0.30), 3);
