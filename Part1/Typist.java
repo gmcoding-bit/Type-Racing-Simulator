@@ -24,6 +24,8 @@ public class Typist
     private int typistDistance;
     private boolean burntOut;
     private int burnOutRemaining;
+    private boolean mistyped;
+    private double burnOutChance; 
 
 
 
@@ -44,6 +46,8 @@ public class Typist
         this.typistDistance = 0;
         this.burntOut = false;
         this.burnOutRemaining = 0;
+        this.mistyped = false;
+        this.burnOutChance = 0.0;
     }
 
 
@@ -210,4 +214,48 @@ public class Typist
     {
         this.typistSymbol = newSymbol;
     }
+
+    /**
+     * Sets the mistyped flag to the parameter value entered.
+     * 
+     * @param mistyped
+     */
+    public void setMistyped(boolean mistyped){
+        this.mistyped = mistyped;
+    }
+
+    /**
+     * returns the mistype status of the typist
+     * 
+     * @return true if the typist has mistyped, false otherwise
+     */
+    public boolean isMistyped(){
+        return this.mistyped;
+    }
+
+    /**
+     * Increments the burnout chance by 0.05 times the square of the typist's accuracy. 
+     * Method is called when a typist increases their distance.
+     */
+    public void incrementBurnOutChance(){
+        this.burnOutChance += 0.05*this.typistAccuracy*this.typistAccuracy;
+    }
+    
+    /**
+     * Resets the burnout chance to 0.0. 
+     * Method is called when a typist recovers from burnout or mistypes.
+     */
+    public void resetBurnOutChance(){
+        this.burnOutChance = 0.0;
+    }
+
+    /**
+     * Returns the current burnout chance of the typist.
+     * 
+     * @return the burnout chance as a double
+     */
+    public double getBurnOutChance(){
+        return this.burnOutChance;
+    }
+
 }

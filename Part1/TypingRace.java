@@ -142,24 +142,27 @@ public class TypingRace
             theTypist.recoverFromBurnout();
             return;
         }
+
         
         // Burnout check — pushing too hard increases burnout risk
         // (probability scales with accuracy squared, capped at ~0.05)
-        if (Math.random() < 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy())
+        if (Math.random() < theTypist.getBurnOutChance())
         {
             theTypist.burnOut(BURNOUT_DURATION);
+            theTypist.resetBurnOutChance();
         }
         // Mistype check — the probability should reflect the typist's accuracy
-        else if (Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE)
+        else if (Math.random() < (1-theTypist.getAccuracy()) * MISTYPE_BASE_CHANCE)
         {
             theTypist.slideBack(SLIDE_BACK_AMOUNT);
+            theTypist.setMistyped(true);
         }
         // Attempt to type a character
-        else if (Math.random() < theTypist.getAccuracy())
+        else
         {
             theTypist.typeCharacter();
+            theTypist.incrementBurnOutChance();
         }
-
 
     }
 
@@ -230,12 +233,18 @@ public class TypingRace
         multiplePrint(' ', spacesBefore);
 
         // Always show the typist's symbol so they can be identified on screen.
-        // Append ~ when burnt out so the state is visible without hiding identity.
+        // Append [zz] when burnt out so the state is visible without hiding identity.
+        // append [<] when just mistyped so the state is visible without hiding identity.
         System.out.print(theTypist.getSymbol());
         if (theTypist.isBurntOut())
         {
-            System.out.print('~');
-            spacesAfter--; // symbol + ~ together take two characters
+            System.out.print("[zz]");
+            spacesAfter -= 4; // symbol + [zz] together take four characters
+        }
+        else if (theTypist.isMistyped())
+        {
+            System.out.print("[<]");
+            spacesAfter -= 3; // symbol + [<] together take four characters
         }
 
         multiplePrint(' ', spacesAfter);
@@ -248,6 +257,13 @@ public class TypingRace
             System.out.print(theTypist.getName()
                 + " (Accuracy: " + theTypist.getAccuracy() + ")"
                 + " BURNT OUT (" + theTypist.getBurnoutTurnsRemaining() + " turns)");
+        }
+        else if (theTypist.isMistyped())
+        {
+            System.out.print(theTypist.getName()
+                + " (Accuracy: " + theTypist.getAccuracy() + ")"
+                + " JUST MISTYPED");
+            theTypist.setMistyped(false);
         }
         else
         {
@@ -273,11 +289,10 @@ public class TypingRace
     }
 
     public static void main(String[] args) {
-    TypingRace race = new TypingRace(5);
+    TypingRace race = new TypingRace(20);
     race.addTypist(new Typist('①', "TURBOFINGERS", 0.85), 1);
     race.addTypist(new Typist('②', "QWERTY_QUEEN",  0.60), 2);
     race.addTypist(new Typist('③', "HUNT_N_PECK",   0.30), 3);
-    race.startRace();
     race.startRace();
     }
 }
