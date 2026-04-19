@@ -51,8 +51,8 @@ public class TypingRace
         if (seatNumber == 1)
         {
             seat1Typist = theTypist;
-        }
-        else if (seatNumber == 2)
+        }                             
+        else if (seatNumber == 2)                                                              
         {
             seat2Typist = theTypist;
         }
@@ -84,15 +84,17 @@ public class TypingRace
         seat2Typist.resetToStart();
         seat3Typist.resetToStart();
 
+        long startTime = System.nanoTime();
         while (!finished)
         {
             // Advance each typist by one turn
+            
             advanceTypist(seat1Typist);
             advanceTypist(seat2Typist);
             advanceTypist(seat3Typist);
 
             // Print the current state of the race
-            printRace();
+            printRace(startTime);
 
             // Check if any typist has finished the passage
             if ( raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist) )
@@ -140,7 +142,6 @@ public class TypingRace
         {
             // Recovering from burnout — skip this turn
             theTypist.recoverFromBurnout();
-            return;
         }
 
         
@@ -162,8 +163,8 @@ public class TypingRace
         {
             theTypist.typeCharacter();
             theTypist.incrementBurnOutChance();
+            theTypist.incrementCorrectCharactersTyped();
         }
-
     }
 
     /**
@@ -189,22 +190,26 @@ public class TypingRace
      * Prints the current state of the race to the terminal.
      * Shows each typist's position along the passage, burnout state,
      * and a WPM estimate based on current progress.
+     * @param startTime time when simulation started, used for wpm
      */
-    private void printRace()
+    private void printRace(long startTime)
     {
+        long currentTime = System.nanoTime();
+        long elapsedTime = currentTime - startTime;
+
         System.out.print('\u000C'); // Clear terminal
 
         System.out.println("  TYPING RACE — passage length: " + passageLength + " chars");
         multiplePrint('=', passageLength + 3);
         System.out.println();
 
-        printSeat(seat1Typist);
+        printSeat(seat1Typist,elapsedTime);
         System.out.println();
 
-        printSeat(seat2Typist);
+        printSeat(seat2Typist,elapsedTime);
         System.out.println();
 
-        printSeat(seat3Typist);
+        printSeat(seat3Typist,elapsedTime);
         System.out.println();
 
         multiplePrint('=', passageLength + 3);
@@ -223,11 +228,21 @@ public class TypingRace
      * be a nice improvement — perhaps a [<] marker after their symbol.
      *
      * @param theTypist the typist whose lane to print
+     * @param elapsedTime the elapsed time since the race started to calculate WPM
      */
-    private void printSeat(Typist theTypist)
+    private void printSeat(Typist theTypist, long elapsedTime)
     {
         int spacesBefore = theTypist.getProgress();
         int spacesAfter  = passageLength - theTypist.getProgress();
+        long elapsedSeconds = TimeUnit.NANOSECONDS.toSeconds(elapsedTime);
+
+
+        //prevents division by zero when calculating WPM
+        if(elapsedSeconds == 0){
+            elapsedSeconds = 1; 
+        }
+
+        int wpm = (int) ((theTypist.getCorrectCharactersTyped() / elapsedSeconds)*60/5); //dividing by 5 as an average per word until actual words are implemented in part 2
 
         System.out.print('|');
         multiplePrint(' ', spacesBefore);
@@ -256,19 +271,22 @@ public class TypingRace
         {
             System.out.print(theTypist.getName()
                 + " (Accuracy: " + theTypist.getAccuracy() + ")"
-                + " BURNT OUT (" + theTypist.getBurnoutTurnsRemaining() + " turns)");
+                + " BURNT OUT (" + theTypist.getBurnoutTurnsRemaining() + " turns)"
+                + " WPM: " + wpm);
         }
         else if (theTypist.isMistyped())
         {
             System.out.print(theTypist.getName()
                 + " (Accuracy: " + theTypist.getAccuracy() + ")"
-                + " JUST MISTYPED");
+                + " JUST MISTYPED"
+                + " WPM: " + wpm);
             theTypist.setMistyped(false);
         }
         else
         {
             System.out.print(theTypist.getName()
-                + " (Accuracy: " + theTypist.getAccuracy() + ")");
+                + " (Accuracy: " + theTypist.getAccuracy() + ")"
+                + " WPM: " + wpm);
         }
     }
 

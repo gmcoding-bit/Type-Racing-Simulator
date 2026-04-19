@@ -26,6 +26,7 @@ public class Typist
     private int burnOutRemaining;
     private boolean mistyped;
     private double burnOutChance; 
+    private int correctCharactersTyped; 
 
 
 
@@ -48,6 +49,7 @@ public class Typist
         this.burnOutRemaining = 0;
         this.mistyped = false;
         this.burnOutChance = 0.0;
+        this.correctCharactersTyped = 0;
     }
 
 
@@ -256,6 +258,23 @@ public class Typist
      */
     public double getBurnOutChance(){
         return this.burnOutChance;
+    }
+
+    /**
+     * Returns the number of correctly typed characters by the typist.
+     * 
+     * @return the number of correct characters typed
+     */
+    public int getCorrectCharactersTyped(){
+        return this.correctCharactersTyped;
+    }
+
+    /**
+     * Increments the count of correctly typed characters by one.
+     * Method is called when a typist successfully types a character.
+     */
+    public void incrementCorrectCharactersTyped(){
+        this.correctCharactersTyped++;
     }
 
 }
