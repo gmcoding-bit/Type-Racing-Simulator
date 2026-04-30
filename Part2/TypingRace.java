@@ -23,6 +23,7 @@ public class TypingRace
 {
     private int passageLength;   // Total characters in the passage to type
     private Typist[] typists; 
+    private long startTime;
 
     // Accuracy thresholds for mistype and burnout events
     // (Ty tuned these values "by feel". They may need adjustment.)
@@ -67,51 +68,33 @@ public class TypingRace
      * Note from Ty: "I didn't bother printing the winner at the end,
      * you can probably figure that out yourself."
      */
-    public Typist startRace()
-    {
-        boolean finished = false;
 
-        // Reset all typists to the start of the passage
-        // (Ty was in a hurry here)
+    //resets race
+    public void resetRace()
+    {
         for (Typist typist : typists)
         {
-            if (typist != null)
-            {
-                typist.resetToStart();
-            }
+            if (typist != null) typist.resetToStart();
         }
+        startTime = System.nanoTime();
+    }
 
-        long startTime = System.nanoTime();
-        while (!finished)
+
+    public Typist turn()
+    {
+        for (Typist typist : typists)
         {
-            // Advance each typist by one turn
-            
-            for (Typist typist : typists)
-            {
-                if (typist != null)
-                {
-                    advanceTypist(typist);
-                }
-            }
-
-
-            // Check if any typist has finished the passage
-
-            for (Typist typist : typists)
-            {
-                if (typist != null && raceFinishedBy(typist))
-                {
-                    finished = true;
-                    return typist;
-                }
-            }
-
-            // Wait 200ms between turns so the animation is visible
-            try {
-                TimeUnit.MILLISECONDS.sleep(200);
-            } catch (Exception e) {}
+            if (typist != null) advanceTypist(typist);
         }
-        return null; // should never get to this point
+
+
+        for (Typist typist : typists)
+        {
+            if (typist != null && raceFinishedBy(typist)) {
+                return typist;
+            }
+        }
+        return null;
     }
 
     /**
@@ -673,12 +656,7 @@ public class TypingRace
                     printTypistRaceGUI(frame, seatCount, autocorrectMOD, caffeineMOD, nightShiftMOD, count+1, race, passage);
                 }else{
                     race.addTypist(new_typist, count);
-                    System.out.println(seatCount);
-                    System.out.println(count);
-                    frame.getContentPane().removeAll();
                     printSimGUI(frame, passage, autocorrectMOD, caffeineMOD, nightShiftMOD, race);
-                    frame.revalidate();
-                    frame.repaint();
                 }
             }
         });
@@ -694,22 +672,26 @@ public class TypingRace
     public static void printSimGUI(JFrame frame, String passage, boolean autocorrectMOD, boolean caffeineMOD, 
                             boolean nightShiftMOD, TypingRace race)
     {
+        frame.getContentPane().removeAll();
+        frame.getContentPane().setLayout(new BorderLayout());
+
         JPanel all_typists = new JPanel();
-        all_typists.setLayout(new GridLayout(race.typists.length,1));
+        all_typists.setLayout(new GridLayout(race.typists.length, 1));
 
         JTextPane[] typistLanes = new JTextPane[race.typists.length];
+        JScrollPane[] scrollPanes = new JScrollPane[race.typists.length];
+        JPanel[] rows = new JPanel[race.typists.length];
 
-        for(int i = 0; i < race.typists.length; i++)
+        for (int i = 0; i < race.typists.length; i++)
         {
             DefaultCaret caret = new DefaultCaret(){
-                @Override public boolean isVisible(){return true;}
-                @Override public boolean isSelectionVisible(){return false;}
-                @Override protected void positionCaret(MouseEvent e) {e.consume();}
-                @Override protected void moveCaret(MouseEvent e) {e.consume();}
+                @Override public boolean isVisible(){ return true; }
+                @Override public boolean isSelectionVisible(){ return false; }
+                @Override protected void positionCaret(MouseEvent e){ e.consume(); }
+                @Override protected void moveCaret(MouseEvent e){ e.consume(); }
             };
-
             caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-            
+
             JTextPane new_lane = new JTextPane();
             new_lane.setEditable(false);
             new_lane.setCaret(caret);
@@ -717,28 +699,81 @@ public class TypingRace
             StyledDocument doc = new_lane.getStyledDocument();
             Style incomplete = doc.addStyle("incomplete", null);
             StyleConstants.setForeground(incomplete, Color.LIGHT_GRAY);
-            try{    
-                doc.insertString(0,passage,incomplete);
-            }catch(BadLocationException ex){}
-            
-            typistLanes[i] = new_lane; 
-            
+            try {
+                doc.insertString(0, passage, incomplete);
+            } catch (BadLocationException ex) {}
+
+            typistLanes[i] = new_lane;
+            JScrollPane scrollPane = new JScrollPane(typistLanes[i]);
+            scrollPanes[i] = scrollPane;
+
             JLabel name = new JLabel(race.typists[i].getName() + " " + race.typists[i].getSymbol() + " (Accuracy: " + race.typists[i].getAccuracy() + ")");
             name.setFont(new Font("Arial", Font.BOLD, 20));
 
             JPanel row = new JPanel(new BorderLayout(0, 4));
             row.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             row.add(name, BorderLayout.NORTH);
-            row.add(new JScrollPane(typistLanes[i]), BorderLayout.CENTER);
+            row.add(scrollPane, BorderLayout.CENTER);
+            rows[i] = row; //stores reference to rows so it can be edited in an iterable fashion using the array
+
             all_typists.add(row);
         }
 
-
-        frame.add(all_typists);
+        frame.getContentPane().add(all_typists, BorderLayout.CENTER);
         frame.revalidate();
         frame.repaint();
+        frame.getRootPane().paintImmediately(frame.getRootPane().getBounds());
+
+        race.resetRace();
+
+        Typist winner = null;
+        while (winner == null)
+        {
+            winner = race.turn();
+            for (int i = 0; i < race.typists.length; i++)
+            {
+                updateDisplay(typistLanes[i], passage, race.typists[i]);
+                rows[i].paintImmediately(rows[i].getVisibleRect());
+            }
+            try
+            {
+                Thread.sleep(200);
+            }
+            catch (InterruptedException e) {}
+        }
+
+        JOptionPane.showMessageDialog(frame, "The winner is " + winner.getName() + "!");
+    }
+private static void updateDisplay(JTextPane pane, String passage, Typist typist)
+{
+    StyledDocument doc = pane.getStyledDocument();
+    int progress = typist.getProgress();
+
+    Style gray = doc.addStyle("gray", null);
+    StyleConstants.setForeground(gray, Color.LIGHT_GRAY);
+    StyleConstants.setFontSize(gray, 20);
+
+    Style green = doc.addStyle("green", null);
+    StyleConstants.setForeground(green, new Color(34, 139, 34));
+    StyleConstants.setFontSize(green, 20);
+
+    doc.setCharacterAttributes(0, passage.length(), gray, true);
+
+    int wordStart = 0;
+    for (int i = 0; i <= passage.length(); i++)
+    {
+        if (i == passage.length() || passage.charAt(i) == ' ')
+        {
+            if (i <= progress)
+            {
+                doc.setCharacterAttributes(wordStart, i - wordStart, green, true);
+            }
+            wordStart = i + 1;
+        }
     }
 
+    pane.setCaretPosition(Math.min(progress, passage.length()));
+}
     public static void main(String[] args) {
         printRaceGUI();
     }
