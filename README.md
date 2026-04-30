@@ -16,6 +16,7 @@ TypingRaceSimulator/
 
 ```bash
 cd Part1
+chcp 65001
 javac Typist.java TypingRace.java
 ```
 
@@ -46,6 +47,7 @@ java TypingRace
 
 ```bash
 cd Part1
+chcp 65001
 javac Typist.java TypingRace.java DocumentSizeFilter.java
 ```
 
