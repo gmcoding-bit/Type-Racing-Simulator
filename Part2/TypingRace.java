@@ -7,6 +7,9 @@ import java.awt.event.*;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * A typing race simulation. Three typists race to complete a passage of text,
@@ -137,7 +140,6 @@ public class TypingRace
         {
             theTypist.typeCharacter();
             theTypist.incrementBurnOutChance();
-            theTypist.incrementCorrectCharactersTyped();
         }
     }
 
@@ -193,7 +195,7 @@ public class TypingRace
             elapsedSeconds = 1; 
         }
 
-        int wpm = (int) ((theTypist.getCorrectCharactersTyped() / elapsedSeconds)*60/5); //dividing by 5 as an average per word until actual words are implemented in part 2
+        int wpm = (int) ((100 / elapsedSeconds)*60/5); //placeholder now that part 2 is in effect not sure if was meant to keep part1
 
         System.out.print('|');
         multiplePrint(' ', spacesBefore);
@@ -675,6 +677,8 @@ public class TypingRace
         frame.getContentPane().removeAll();
         frame.getContentPane().setLayout(new BorderLayout());
 
+        long startTime = System.nanoTime();
+
         JPanel all_typists = new JPanel();
         all_typists.setLayout(new GridLayout(race.typists.length, 1));
 
@@ -737,43 +741,147 @@ public class TypingRace
             }
             try
             {
-                Thread.sleep(200);
+                Thread.sleep(100);
             }
             catch (InterruptedException e) {}
         }
 
         JOptionPane.showMessageDialog(frame, "The winner is " + winner.getName() + "!");
-    }
-private static void updateDisplay(JTextPane pane, String passage, Typist typist)
-{
-    StyledDocument doc = pane.getStyledDocument();
-    int progress = typist.getProgress();
+        
+        long elapsedTime = System.nanoTime() - startTime;
+        long elapsedSeconds = TimeUnit.NANOSECONDS.toSeconds(elapsedTime); 
 
-    Style gray = doc.addStyle("gray", null);
-    StyleConstants.setForeground(gray, Color.LIGHT_GRAY);
-    StyleConstants.setFontSize(gray, 20);
 
-    Style green = doc.addStyle("green", null);
-    StyleConstants.setForeground(green, new Color(34, 139, 34));
-    StyleConstants.setFontSize(green, 20);
-
-    doc.setCharacterAttributes(0, passage.length(), gray, true);
-
-    int wordStart = 0;
-    for (int i = 0; i <= passage.length(); i++)
-    {
-        if (i == passage.length() || passage.charAt(i) == ' ')
-        {
-            if (i <= progress)
-            {
-                doc.setCharacterAttributes(wordStart, i - wordStart, green, true);
+        for(Typist current_typist : race.typists){
+            for(int i = 0;i < current_typist.getProgress(); i++){
+                if(i == passage.length()-1){
+                    current_typist.incrementCorrectWordsTyped();
+                }
+                else if(i != 0 && passage.charAt(i) == ' ' && passage.charAt(i-1) != ' ' ){
+                    current_typist.incrementCorrectWordsTyped();
+                }
             }
-            wordStart = i + 1;
         }
-    }
 
-    pane.setCaretPosition(Math.min(progress, passage.length()));
-}
+        List<Typist> positions = new ArrayList<Typist>();
+        for(Typist current_Typist : race.typists){
+            positions.add(current_Typist);
+        }
+        positions.sort((a,b) -> {return -1 * ((Integer)a.getProgress()).compareTo((Integer)b.getProgress());});
+        
+        for(int i = 0; i< race.typists.length;i++){
+            int position = positions.indexOf(race.typists[i]);
+            race.typists[i].setRaceWPM((int)(race.typists[i].getCorrectWordsTyped()/elapsedSeconds)*60);
+            race.typists[i].add_stats(position+1);
+        }
+        afterRaceGUI(frame, passage, autocorrectMOD, caffeineMOD, nightShiftMOD, race);
+    }
+    /**
+     * 
+     * @param pane
+     * @param passage
+     * @param typist
+     * Updates the race display for each turn a typist takes
+     */
+    public static void updateDisplay(JTextPane pane, String passage, Typist typist)
+    {
+        StyledDocument doc = pane.getStyledDocument();
+        int progress = typist.getProgress();
+
+        Style gray = doc.addStyle("gray", null);
+        StyleConstants.setForeground(gray, Color.LIGHT_GRAY);
+        StyleConstants.setFontSize(gray, 20);
+
+        Style green = doc.addStyle("green", null);
+        StyleConstants.setForeground(green, new Color(34, 139, 34));
+        StyleConstants.setFontSize(green, 20);
+
+        doc.setCharacterAttributes(0, passage.length(), gray, true);
+
+        int wordStart = 0;
+        for (int i = 0; i <= passage.length(); i++)
+        {
+            if (i == passage.length() || passage.charAt(i) == ' ')
+            {
+                if (i <= progress)
+                {
+                    doc.setCharacterAttributes(wordStart, i - wordStart, green, true);
+                }
+                wordStart = i + 1;
+            }
+
+        }
+
+        pane.setCaretPosition(Math.min(progress, passage.length()));
+    }
+    /**
+     * 
+     * @param frame
+     * @param passage
+     * @param autocorrectMOD
+     * @param caffeineMOD
+     * @param nightShiftMOD
+     * @param race
+     * Contains the logic for the post race GUI
+     * displays typists hisory and statistics 
+     * lets the user start another race
+     */
+    public static void afterRaceGUI(JFrame frame, String passage, boolean autocorrectMOD, boolean caffeineMOD, boolean nightShiftMOD
+        , TypingRace race)
+    {
+        frame.getContentPane().removeAll();
+        frame.getContentPane().setLayout(new BorderLayout());
+
+        JPanel all_typists = new JPanel();
+        all_typists.setLayout(new GridLayout(race.typists.length, 1));
+        for(int i = 0; i< race.typists.length; i++)
+        {
+            List<HashMap<String,String>> history= race.typists[i].getStats();
+            HashMap<String,String> lastrace = history.get(history.size()-1);
+            double accuracyChange = (Integer.parseInt(lastrace.get("position")) == 1 ? 0.03 : 0 );
+            JLabel typistStats = new JLabel("WPM: "+ race.typists[i].getRaceWPM() +". Best WPM: "+race.typists[i].getBestWPM() +". Accuracy percentage: "+ race.typists[i].getAccuracyPercentage()+ "%. Burnout Count: "+ race.typists[i].getBurnoutNum()+ ". Accuracy change: "+ accuracyChange);
+            if(lastrace.get("position").equals("1")){
+                race.typists[i].setAccuracy(race.typists[i].getAccuracy()+0.03);
+            }
+            JPanel statsPanel = new JPanel();
+            statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+            statsPanel.add(typistStats);
+
+            for(int j = 0; j< history.size();j++){
+                HashMap<String,String> pastRaceStats = history.get(j); 
+                JLabel pastRace = new JLabel("WPM: "+pastRaceStats.get("WPM") + ". Position: "+ pastRaceStats.get("position")+". Accuracy: "+ pastRaceStats.get("accuracy") + ". Burnouts: "+ pastRaceStats.get("burnouts"));
+                pastRace.setBorder(BorderFactory.createTitledBorder("Race "+(j+1)+ "."));
+                statsPanel.add(pastRace);
+            }
+
+            JLabel name = new JLabel(race.typists[i].getName() + " " + race.typists[i].getSymbol());
+            name.setFont(new Font("Arial", Font.BOLD, 20));
+
+            JPanel row = new JPanel(new BorderLayout(0, 4));
+            row.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            row.add(name, BorderLayout.NORTH);
+            row.add(statsPanel, BorderLayout.CENTER);
+
+
+            all_typists.add(row);
+        }
+
+        JButton restartButton = new JButton("RESTART RACE");
+        restartButton.setFont(new Font("Arial", Font.BOLD, 20));
+        restartButton.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                printSimGUI(frame, passage, autocorrectMOD, caffeineMOD, nightShiftMOD, race);
+            }
+        });
+
+        JPanel buttonPane = new JPanel();
+        buttonPane.add(restartButton);
+
+        frame.getContentPane().add(all_typists, BorderLayout.CENTER);
+        frame.getContentPane().add(buttonPane,BorderLayout.EAST);
+        frame.revalidate();
+        frame.repaint();
+    }
     public static void main(String[] args) {
         printRaceGUI();
     }

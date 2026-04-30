@@ -42,13 +42,32 @@ java TypingRace
 
 ## Part 2 — GUI Simulation
 
-To be implemented as part of the coursework. Place all GUI-related source files in this folder. The graphical version is started by calling `startRaceGUI()`.
+### How to compile
+
+```bash
+cd Part1
+javac Typist.java TypingRace.java DocumentSizeFilter.java
+```
+
+## How to run
+
+```java
+public static void main(String[] args) {
+    printRaceGUI();
+}
+```
+
+```bash
+java TypingRace
+```
 
 ## Dependencies
 
 - Java Development Kit (JDK) 11 or higher
 - No external libraries required for Part 1
 - Part 2 may use Java Swing (included in standard JDK) or JavaFX
+- used java swing, awt and java util data structures(hashmap, list and arraylist)
+- DocumentSizeFilter file is required for the GUI
 
 ## Notes
 
